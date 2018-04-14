@@ -1,98 +1,65 @@
 package com.sanderhelleso.robo;
 
+import java.awt.Color;
 import robocode.*;
-import robocode.util.Utils;
 
 import java.util.Random;
 import java.util.Vector;
+
+/**
+ * XxDragonLordSlayer99xX - A Robot fidget spinner
+ *
+ * @author Sander Lade Hellesø
+ * @author Dag Eirik Vik
+ * @author Ralf Leistad
+ */
 
 public class XxDragonLordSlayer99xX extends AdvancedRobot {
 
     // globals
     Random random = new Random();
-    private RobotStatus status;
+
+    // color method
+    private Color Color(int r, int g, int b, int a) {
+        return new Color(r, g, b, a);
+    }
 
     // main abilities and loop for robot
     @Override
     public void run() {
+        // set pink color
+        setAllColors(Color(255, 183, 255, 1));
 
-        setTurnRadarRight(Double.POSITIVE_INFINITY);
+        // robots run method
         while(true) {
-
-            // adjust gun at start
-            setAdjustGunForRobotTurn(true);
-            setAdjustRadarForGunTurn(true);
-            turnRadarRight(360);
-
-            // move
-            moveRobo();
-            scan();
+            right();
         }
     }
 
-    public void dodge() {
-        // random movement pattern
-        int ahead = random.nextInt(50) + 25;
-        int right = random.nextInt(50) + 25;
-
-        ahead(ahead);
-        turnRight(right);
+    // move robot in a circular pattern to the right, with a little twist every round
+    public void right() {
+        int pattern = random.nextInt(10000) + 5000;
+        setTurnRight(pattern);
+        setMaxVelocity(5);
+        ahead(pattern);
     }
 
+    // move the robot in a in medium circluar pattern
     public void moveRobo() {
         // random movement pattern
-        int ahead = random.nextInt(200) + 100;
-        int left = random.nextInt(100) + 50;
-        int back = random.nextInt(200) + 100;
-        int right = random.nextInt(100) + 50;
-
-        turnLeft(left);
-        ahead(ahead);
-        turnRight(right);
-        back(back);
+        int pattern = random.nextInt(200) + 100;
+        turnRight(pattern);
+        ahead(pattern);
     }
 
-    @Override
-    public void onStatus(StatusEvent e) {
-        super.onStatus(e);
-        this.status = e.getStatus();
-
-        // get position
-        double currentY = e.getStatus().getY();
-        double currentX = e.getStatus().getX();
-
-        double arenaWidth = 800;
-        double arenaHeight = 600;
-
-        if (arenaWidth - currentX <= 100) {
-            if (e.getStatus().getHeading() <= 90) {
-                turnLeft(180);
-                ahead(50);
-            }
-
-            else if (e.getStatus().getHeading() > 90 && e.getStatus().getHeading() <= 180) {
-                turnRight(180);
-                ahead(50);
-            }
-        }
-
-        if (currentX - arenaWidth >= 100) {
-            turnRight(180);
-            ahead(50);
-        }
-    }
-
+    // fire a massive load when finding a enemy using the scanner
     public void onScannedRobot(ScannedRobotEvent e) {
-
-        setTurnRadarRight(2.0 * Utils.normalRelativeAngleDegrees(getHeading() + e.getBearing() - getRadarHeading()));
-        setTurnGunRight(getHeading() - getGunHeading() + e.getBearing());
-        setFire(Math.min(400 / e.getDistance(), 3));
-        fireBullet(10);
+        fire(3);
     }
 
-    // run when robot hits enemy
+    // run when robot hits enemy, backs off
     public void onBulletHit(BulletHitEvent event) {
-
+        back(50);
     }
 
     // run when robot is hit by bullet
@@ -101,26 +68,22 @@ public class XxDragonLordSlayer99xX extends AdvancedRobot {
         moveRobo();
     }
 
-    // run when colliding with wall
-    @Override
-    public void onHitWall(HitWallEvent event) {
-        super.onHitWall(event);
-        /*int move = random.nextInt(200) + 50;
-        turnLeft(180);
-        back(move);*/
-    }
-
     @Override
     public Vector<HitByBulletEvent> getHitByBulletEvents() {
-        dodge();
+        moveRobo();
         return super.getHitByBulletEvents();
     }
 
     // run when colliding with robot
     @Override
     public void onHitRobot(HitRobotEvent event) {
-        super.onHitRobot(event);
-        fire(3);
-        fireBullet(10);
+        // fire a hard load on the enemy
+        if (event.getBearing() > -10 && event.getBearing() < 10) {
+            fire(3);
+        }
+        // continue moving if its our fault our robot got hit
+        if (event.isMyFault()) {
+            turnRight(10);
+        }
     }
 }
